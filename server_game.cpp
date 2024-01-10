@@ -37,7 +37,7 @@ void handleClient(Player& player1, Player& player2) {
         memset(buffer, 0, sizeof(buffer));
         if(player1.isOnMove){
             recv(player1.clientSocket, buffer, sizeof(buffer), 0);
-
+            if(strncmp(buffer, "END", 3) == 0) break;
             send(player2.clientSocket, buffer, sizeof(buffer), 0);
             std::cout<<"Move of the player "<< player1.number << " " <<buffer<<std::endl;
             memset(buffer, 0, sizeof(buffer));
@@ -48,7 +48,7 @@ void handleClient(Player& player1, Player& player2) {
             player2.isOnMove = true;
         } else if(player2.isOnMove){
             recv(player2.clientSocket, buffer, sizeof(buffer), 0);
-
+            if(strncmp(buffer, "END", 3) == 0) break;
             send(player1.clientSocket, buffer, sizeof(buffer), 0);
             std::cout<<"Move of the player "<< player2.number << " " <<buffer<<std::endl;
             memset(buffer, 0, sizeof(buffer));
@@ -62,6 +62,7 @@ void handleClient(Player& player1, Player& player2) {
 }
 
 int main() {
+    Player player[20];
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == -1) {
         std::cerr << "Error in connection with socket\n";
@@ -88,26 +89,30 @@ int main() {
     std::vector<std::thread> gameThreads;
 
     int playerNumber = 0;
+    int playerNumbToSend = 0;
 
     while (true) {
-        Player player1, player2;
+        //Player player[playerNumber], player[playerNumber + 1];
 
         //Accept first player and send number
-        player1.clientSocket = accept(serverSocket, nullptr, nullptr);
-        std::cout<<"Player 0 connected"<<std::endl;
-        player1.number = playerNumber;
-        send(player1.clientSocket, std::to_string(player1.number).c_str(), sizeof(std::to_string(player1.number)), 0);
+        player[playerNumber].clientSocket = accept(serverSocket, nullptr, nullptr);
+        std::cout<<"Player "<<playerNumber<<" connected"<<std::endl;
+        player[playerNumber].number = playerNumbToSend;
+        send(player[playerNumber].clientSocket, std::to_string(player[playerNumber].number).c_str(), sizeof(std::to_string(player[playerNumber].number)), 0);
 
         //Accept 2nd player and send number
-        player2.clientSocket = accept(serverSocket, nullptr, nullptr);
-        std::cout<<"Player 1 connected"<<std::endl;
-        player2.number = ++playerNumber;
-        send(player2.clientSocket, std::to_string(player2.number).c_str(), sizeof(std::to_string(player2.number)), 0);
-
-        playerNumber = 0;
+        ++playerNumber;
+        ++playerNumbToSend;
+        player[playerNumber].clientSocket = accept(serverSocket, nullptr, nullptr);
+        player[playerNumber].number = playerNumbToSend;
+        std::cout<<"Player "<<playerNumber<<" connected"<<std::endl;
+        send(player[playerNumber].clientSocket, std::to_string(player[playerNumber].number).c_str(), sizeof(std::to_string(player[playerNumber].number)), 0);
 
         //Seperate thread for clients
-        gameThreads.emplace_back(handleClient, std::ref(player1), std::ref(player2));
+        gameThreads.emplace_back(handleClient, std::ref(player[playerNumber-1]), std::ref(player[playerNumber]));
+        
+        ++playerNumber;
+        playerNumbToSend = 0;
     }
 
     for (auto& thread : gameThreads) {

@@ -24,8 +24,8 @@ ConnectFourGame::ConnectFourGame() {
 //for better visualisation of board
 std::string printColumnEnd(int cols){
     std::string columnEnd = "";
-    for(int i = 0; i < cols; i++) columnEnd += "----------------";
-    columnEnd += "-";
+    for(int i = 0; i < cols + 1; i++) columnEnd += "-----";
+    columnEnd += "---";
     return columnEnd;
 }
 
@@ -34,14 +34,14 @@ std::string ConnectFourGame::displayBoard() {
     boardView += printColumnEnd(cols);
     for (int i = 0; i < rows; ++i) {
         boardView += "\n";
-        boardView += "| ";
+        boardView += "|";
         for (int j = 0; j < cols; ++j) {
-            boardView += "\t" + board[i][j] + "\t|";
+            boardView += "  " + board[i][j] + "  |";
         }
         boardView += "\n";
         boardView += printColumnEnd(cols);
-        boardView += "\n";
     }
+    boardView += "\n";
     return boardView;
 }
 
@@ -67,13 +67,13 @@ bool ConnectFourGame::makeMove(int column, Player& player) {
         return false;
     }
 
-    // Find first free space in column
+    //Find first free space in column
     int row = rows - 1;
     while (row > 0 && board[row][column] != " ") {
         --row;
     }
 
-    // Put player pawn
+    //Put player pawn
     board[row][column] = player.pawn;
 
     return true;
@@ -82,7 +82,7 @@ bool ConnectFourGame::makeMove(int column, Player& player) {
 bool ConnectFourGame::checkForRow(int row, int col, Player& player) {
     int count = 0;
 
-    // Check left
+    //Check left
     for (int i = col; i >= 0; --i) {
         if (board[row][i] == player.pawn) {
             ++count;
@@ -91,7 +91,7 @@ bool ConnectFourGame::checkForRow(int row, int col, Player& player) {
         }
     }
 
-    // Check right
+    //Check right
     for (int i = col + 1; i < cols; ++i) {
         if (board[row][i] == player.pawn) {
             ++count;
@@ -106,7 +106,7 @@ bool ConnectFourGame::checkForRow(int row, int col, Player& player) {
 bool ConnectFourGame::checkForColumn(int row, int col, Player& player) {
     int count = 0;
 
-    // Check down
+    //Check down
     for (int i = row; i < rows; ++i) {
         if (board[i][col] == player.pawn) {
             ++count;
@@ -122,7 +122,7 @@ bool ConnectFourGame::checkForDiagonal(int row, int col, Player& player) {
     int countLeft = 0; // For left diagonal
     int countRight = 0; // For right diagonal
 
-    // Check left and up
+    //Check left and up
     for (int i = row, j = col; i >= 0 && j >= 0; --i, --j) {
         if (board[i][j] == player.pawn) {
             ++countLeft;
@@ -131,7 +131,7 @@ bool ConnectFourGame::checkForDiagonal(int row, int col, Player& player) {
         }
     }
 
-    // Check right and down
+    //Check right and down
     for (int i = row + 1, j = col + 1; i < rows && j < cols; ++i, ++j) {
         if (board[i][j] == player.pawn) {
             ++countRight;
@@ -154,7 +154,7 @@ bool ConnectFourGame::checkForWin(Player& player) {
         }
     }
 
-    return false; // No one wins
+    return false; //No one wins
 }
 
 bool ConnectFourGame::isBoardFull() {
@@ -171,7 +171,7 @@ void displayConnectionMessage(Player &player) {
         + "Waiting for second player...\n";
 }
 
-bool yourTurn(ConnectFourGame& game, Player &player, int col) {
+bool yourTurn(ConnectFourGame& game, Player &player, int col, bool who) {
     if (game.makeMove(col - 1, player))
     {
         std::cout << game.displayBoard();
@@ -179,7 +179,8 @@ bool yourTurn(ConnectFourGame& game, Player &player, int col) {
         {
             
             std::cout << std::endl;
-            std::cout << player.name << " wins!\n";
+            if(who) std::cout <<"Congratulations! You won!\n";
+            else std::cout <<"Your opponent won this game. Better luck next time!\n";
             return false; //end of game
         }
 
@@ -244,8 +245,12 @@ void connectToServer(ConnectFourGame& game) {
                 int opponentCol = boardData[5] - '0'; //opponent column
                 if(opponentCol != 9){ //Opponent made his move
                     std::cout<<"Opponent move: "<<opponentCol<<std::endl;
-                    RUNNING = yourTurn(game, oponent, opponentCol);
-                    if(!RUNNING) continue;
+                    RUNNING = yourTurn(game, oponent, opponentCol, false);
+                    if(!RUNNING){
+                        strcpy(buffer, "END");
+                        send(clientSocket, buffer, sizeof(buffer), 0);
+                        continue;
+                    }
                 } else std::cout << game.displayBoard();
 
                 int column;
@@ -255,7 +260,11 @@ void connectToServer(ConnectFourGame& game) {
                 std::string message = "BOARD" + std::to_string(column);
                 send(clientSocket, message.c_str(), message.size(), 0);
 
-                RUNNING = yourTurn(game, player, column);
+                RUNNING = yourTurn(game, player, column, true);
+                if(!RUNNING){
+                    strcpy(buffer, "END");
+                    send(clientSocket, buffer, sizeof(buffer), 0);
+                }
             }
         }
     }

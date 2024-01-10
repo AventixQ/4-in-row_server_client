@@ -19,17 +19,17 @@ ConnectFourGame::ConnectFourGame() {
 
 //for better visualisation of board
 void printColumnEnd(int cols){
-    for(int i = 0; i < cols; i++) std::cout<<"----------------";
-    std::cout<<"-";
+    for(int i = 0; i < cols+1; i++) std::cout<<"-----";
+    std::cout<<"---";
 }
 
 void ConnectFourGame::displayBoard() {
     printColumnEnd(cols);
     for (int i = 0; i < rows; ++i) {
         std::cout<<std::endl;
-        std::cout<<"| ";
+        std::cout<<"|";
         for (int j = 0; j < cols; ++j) {
-            std::cout<<"\t"<<board[i][j]<<"\t|";
+            std::cout<<"  "<<board[i][j]<<"  |";
         }
         std::cout<<std::endl;
         printColumnEnd(cols);
