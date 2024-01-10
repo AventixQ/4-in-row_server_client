@@ -40,6 +40,7 @@ std::string ConnectFourGame::displayBoard() {
         }
         boardView += "\n";
         boardView += printColumnEnd(cols);
+        boardView += "\n";
     }
     return boardView;
 }
@@ -166,16 +167,17 @@ bool ConnectFourGame::isBoardFull() {
 }
 
 void displayConnectionMessage(Player &player) {
-    std::string welcome = "Welcome to the game!\n" + player.name + ": " + player.pawn + "\n"
+    std::cout<<"You are " + player.name + ". Your pawn is: " + player.pawn + "\n"
         + "Waiting for second player...\n";
 }
 
 bool yourTurn(ConnectFourGame& game, Player &player, int col) {
     if (game.makeMove(col - 1, player))
     {
+        std::cout << game.displayBoard();
         if (game.checkForWin(player))
         {
-            std::cout << game.displayBoard();
+            
             std::cout << std::endl;
             std::cout << player.name << " wins!\n";
             return false; //end of game
@@ -183,7 +185,7 @@ bool yourTurn(ConnectFourGame& game, Player &player, int col) {
 
         if (game.isBoardFull())
         {
-            std::cout << game.displayBoard();
+            //std::cout << game.displayBoard();
             std::cout << std::endl;
             std::cout << "It's a draw!\n";
             return false; //end of game
@@ -211,12 +213,14 @@ void connectToServer(ConnectFourGame& game) {
         std::cerr << "Error in connecting with server \n";
         close(clientSocket);
         return;
-    }
+    } else{
+        std::cout<<"Welcome to the game!"<<std::endl;
+    
     //connect and get from server number and pawn
     char buffer[1024];
     memset(buffer, 0, sizeof(buffer));
     recv(clientSocket, buffer, sizeof(buffer), 0);
-
+    //std::cout<<buffer<<std::endl;
     if (buffer[0] == '0' || buffer[0] == '1') {
         int playerNumber = buffer[0] - '0' + 1;
         player.name = "Player " + std::to_string(playerNumber);
@@ -232,15 +236,17 @@ void connectToServer(ConnectFourGame& game) {
         while (RUNNING) {
             memset(buffer, 0, sizeof(buffer));
             recv(clientSocket, buffer, sizeof(buffer), 0);
-
+            //std::cout<<buffer<<std::endl; //OK
             if (strncmp(buffer, "WAIT", 4) == 0) {
                 std::cout << "Waiting for second player's move...\n";
             } else if (strncmp(buffer, "BOARD", 5) == 0) {
                 std::string boardData(buffer, sizeof(buffer));
-                int opponentCol = std::stoi(boardData.substr(6)); //oponent column
-                if(opponentCol != 9){ //Przeciwnik wykonał ruch
+                int opponentCol = boardData[5] - '0'; //opponent column
+                if(opponentCol != 9){ //Opponent made his move
+                    std::cout<<"Opponent move: "<<opponentCol<<std::endl;
                     RUNNING = yourTurn(game, oponent, opponentCol);
-                }
+                    if(!RUNNING) continue;
+                } else std::cout << game.displayBoard();
 
                 int column;
                 std::cout << "Your turn. Enter column number (1-7): ";
@@ -253,7 +259,7 @@ void connectToServer(ConnectFourGame& game) {
             }
         }
     }
-    close(clientSocket);
+    close(clientSocket);}
 }
 
 int main() {
