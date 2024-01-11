@@ -113,7 +113,7 @@ bool ConnectFourGame::checkForDiagonal(int row, int col, Player& player) {
     int countLeft = 0; // For left diagonal
     int countRight = 0; // For right diagonal
 
-    // Check left and up
+    // Check left
     for (int i = row, j = col; i >= 0 && j >= 0; --i, --j) {
         if (board[i][j] == player.pawn) {
             ++countLeft;
@@ -122,8 +122,8 @@ bool ConnectFourGame::checkForDiagonal(int row, int col, Player& player) {
         }
     }
 
-    // Check right and down
-    for (int i = row + 1, j = col + 1; i < rows && j < cols; ++i, ++j) {
+    // Check right
+    for (int i = row, j = col; i < rows && j < cols; --i, ++j) {
         if (board[i][j] == player.pawn) {
             ++countRight;
         } else {
@@ -131,7 +131,7 @@ bool ConnectFourGame::checkForDiagonal(int row, int col, Player& player) {
         }
     }
 
-    return countLeft + countRight >= 4; // If 4 in column -> true
+    return countLeft >= 4 || countRight >= 4; // If 4 in column -> true
 }
 
 bool ConnectFourGame::checkForWin(Player& player) {

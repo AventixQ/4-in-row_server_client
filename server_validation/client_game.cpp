@@ -45,6 +45,7 @@ std::string ConnectFourGame::displayBoard() {
     return boardView;
 }
 
+//SERVER
 bool ConnectFourGame::isValidMove(int column) {
     // Check if column number is valid
     if (column < 0 || column >= cols) {
@@ -122,7 +123,7 @@ bool ConnectFourGame::checkForDiagonal(int row, int col, Player& player) {
     int countLeft = 0; // For left diagonal
     int countRight = 0; // For right diagonal
 
-    //Check left and up
+    // Check left
     for (int i = row, j = col; i >= 0 && j >= 0; --i, --j) {
         if (board[i][j] == player.pawn) {
             ++countLeft;
@@ -131,8 +132,8 @@ bool ConnectFourGame::checkForDiagonal(int row, int col, Player& player) {
         }
     }
 
-    //Check right and down
-    for (int i = row + 1, j = col + 1; i < rows && j < cols; ++i, ++j) {
+    // Check right
+    for (int i = row, j = col; i < rows && j < cols; --i, ++j) {
         if (board[i][j] == player.pawn) {
             ++countRight;
         } else {
@@ -140,7 +141,7 @@ bool ConnectFourGame::checkForDiagonal(int row, int col, Player& player) {
         }
     }
 
-    return countLeft + countRight >= 4; // If 4 in column -> true
+    return countLeft >= 4 || countRight >= 4; // If 4 in column -> true
 }
 
 bool ConnectFourGame::checkForWin(Player& player) {
@@ -247,6 +248,7 @@ void connectToServer(ConnectFourGame& game) {
                     std::cout<<"Opponent move: "<<opponentCol<<std::endl;
                     RUNNING = yourTurn(game, oponent, opponentCol, false);
                     if(!RUNNING){
+                        memset(buffer, 0, sizeof(buffer));
                         strcpy(buffer, "END");
                         send(clientSocket, buffer, sizeof(buffer), 0);
                         continue;
@@ -256,12 +258,23 @@ void connectToServer(ConnectFourGame& game) {
                 int column;
                 std::cout << "Your turn. Enter column number (1-7): ";
                 std::cin >> column;
-
                 std::string message = "BOARD" + std::to_string(column);
                 send(clientSocket, message.c_str(), message.size(), 0);
+                memset(buffer, 0, sizeof(buffer));
+                recv(clientSocket, buffer, sizeof(buffer), 0);
+                while(strncmp(buffer, "ERROR", 5) == 0){
+                    std::cout << "Wrong number! Enter column number (1-7): ";
+                    std::cin >> column;
 
+                    std::string message = "BOARD" + std::to_string(column);
+                    //std::cout<<"mess:"<<message;
+                    send(clientSocket, message.c_str(), message.size(), 0);
+                    memset(buffer, 0, sizeof(buffer));
+                    recv(clientSocket, buffer, sizeof(buffer), 0);
+                }
                 RUNNING = yourTurn(game, player, column, true);
                 if(!RUNNING){
+                    memset(buffer, 0, sizeof(buffer));
                     strcpy(buffer, "END");
                     send(clientSocket, buffer, sizeof(buffer), 0);
                 }
