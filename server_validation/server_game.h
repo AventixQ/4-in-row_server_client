@@ -15,6 +15,7 @@ struct Player{
     int clientSocket;
     bool isOnMove;
     int number;
+    int server_number;
 };
 
 class ConnectFourGame {

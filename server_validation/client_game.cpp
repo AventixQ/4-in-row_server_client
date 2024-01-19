@@ -257,14 +257,16 @@ void connectToServer(ConnectFourGame& game) {
 
                 int column;
                 std::cout << "Your turn. Enter column number (1-7): ";
-                std::cin >> column;
+                try{std::cin >> column;}
+                catch(const std::exception& e){column = 8;}
                 std::string message = "BOARD" + std::to_string(column);
                 send(clientSocket, message.c_str(), message.size(), 0);
                 memset(buffer, 0, sizeof(buffer));
                 recv(clientSocket, buffer, sizeof(buffer), 0);
                 while(strncmp(buffer, "ERROR", 5) == 0){
                     std::cout << "Wrong number! Enter column number (1-7): ";
-                    std::cin >> column;
+                    try{std::cin >> column;}
+                    catch(const std::exception& e){column = 8;}
 
                     std::string message = "BOARD" + std::to_string(column);
                     //std::cout<<"mess:"<<message;

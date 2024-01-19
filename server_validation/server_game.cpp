@@ -136,7 +136,7 @@ void handleClient(Player& player1, Player& player2, ConnectFourGame& game) {
         strcpy(buffer, "PLAYED");
         send(player[0].clientSocket, buffer, sizeof(buffer), 0);          // send info to player, that his move was correct
         send(player[1].clientSocket, message.c_str(), message.size(), 0); // send move to opponent
-        std::cout << "Move of the player " << player[0].number << " " << message << std::endl;
+        std::cout << "Move of the player " << player[0].server_number << " " << message << std::endl;
         memset(buffer, 0, sizeof(buffer));
         strcpy(buffer, "WAIT");
         send(player[0].clientSocket, buffer, sizeof(buffer), 0); // send to player waiting info
@@ -147,8 +147,8 @@ void handleClient(Player& player1, Player& player2, ConnectFourGame& game) {
 }
 
 int main() {
-    Player player[20];
-    ConnectFourGame game[10];
+    Player player[200];
+    ConnectFourGame game[100];
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == -1) {
         std::cerr << "Error in connection with socket\n";
@@ -189,6 +189,7 @@ int main() {
         ++playerNumbToSend;
         player[playerNumber].clientSocket = accept(serverSocket, nullptr, nullptr);
         player[playerNumber].number = playerNumbToSend;
+        player[playerNumber].server_number = playerNumber;
         std::cout<<"Player "<<playerNumber<<" connected"<<std::endl;
         send(player[playerNumber].clientSocket, std::to_string(player[playerNumber].number).c_str(), sizeof(std::to_string(player[playerNumber].number)), 0);
 
