@@ -223,6 +223,7 @@ void connectToServer(ConnectFourGame& game) {
     memset(buffer, 0, sizeof(buffer));
     recv(clientSocket, buffer, sizeof(buffer), 0);
     //std::cout<<buffer<<std::endl;
+    
     if (buffer[0] == '0' || buffer[0] == '1') {
         int playerNumber = buffer[0] - '0' + 1;
         player.name = "Player " + std::to_string(playerNumber);
@@ -236,6 +237,7 @@ void connectToServer(ConnectFourGame& game) {
         std::string message;
         bool RUNNING = true;
         while (RUNNING) {
+
             memset(buffer, 0, sizeof(buffer));
             recv(clientSocket, buffer, sizeof(buffer), 0);
             //std::cout<<buffer<<std::endl; //OK
@@ -244,9 +246,11 @@ void connectToServer(ConnectFourGame& game) {
             } else if (strncmp(buffer, "BOARD", 5) == 0) {
                 std::string boardData(buffer, sizeof(buffer));
                 int opponentCol = boardData[5] - '0'; //opponent column
+
                 if(opponentCol != 9){ //Opponent made his move
                     std::cout<<"Opponent move: "<<opponentCol<<std::endl;
                     RUNNING = yourTurn(game, oponent, opponentCol, false);
+
                     if(!RUNNING){
                         memset(buffer, 0, sizeof(buffer));
                         strcpy(buffer, "END");
@@ -257,12 +261,15 @@ void connectToServer(ConnectFourGame& game) {
 
                 int column;
                 std::cout << "Your turn. Enter column number (1-7): ";
+
                 try{std::cin >> column;}
                 catch(const std::exception& e){column = 8;}
+
                 std::string message = "BOARD" + std::to_string(column);
                 send(clientSocket, message.c_str(), message.size(), 0);
                 memset(buffer, 0, sizeof(buffer));
                 recv(clientSocket, buffer, sizeof(buffer), 0);
+
                 while(strncmp(buffer, "ERROR", 5) == 0){
                     std::cout << "Wrong number! Enter column number (1-7): ";
                     try{std::cin >> column;}
@@ -274,6 +281,7 @@ void connectToServer(ConnectFourGame& game) {
                     memset(buffer, 0, sizeof(buffer));
                     recv(clientSocket, buffer, sizeof(buffer), 0);
                 }
+
                 RUNNING = yourTurn(game, player, column, true);
                 if(!RUNNING){
                     memset(buffer, 0, sizeof(buffer));
